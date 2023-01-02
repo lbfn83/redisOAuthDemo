@@ -18,6 +18,8 @@ exports.getPosts = (req, res, next) => {
         .limit(perPage);
     })
     .then(posts => {
+      // if you want to send cookie... but you only need to do that in
+      // res.setHeader('Set-Cookie', req.headers.cookie);
       res
         .status(200)
         .json({

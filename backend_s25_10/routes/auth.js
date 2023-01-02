@@ -33,6 +33,8 @@ router.put(
 
 router.post('/login', authController.login);
 
+// get보다는 post가 더 make sense 하다고 봐야하나
+// https://stackoverflow.com/questions/3521290/logout-get-or-post
 router.post('/logout', authController.logout);
 
 module.exports = router;

@@ -49,11 +49,51 @@ class App extends Component {
     this.setState({ showBackdrop: false, showMobileNav: false, error: null });
   };
 
+  // this will be invoked either the time runs out 
+  // or logout button was invoked
   logoutHandler = () => {
     this.setState({ isAuth: false, token: null });
     localStorage.removeItem('token');
     localStorage.removeItem('expiryDate');
     localStorage.removeItem('userId');
+    fetch('http://localhost:8080/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // body: JSON.stringify({
+      //   email: authData.email,
+      //   password: authData.password
+      // })
+    })
+      .then(res => {
+        if (res.status === 422) {
+          throw new Error('Validation failed.');
+        }
+        if (res.status !== 200 && res.status !== 201) {
+          console.log('Error!');
+          throw new Error('Could not log out!');
+        }
+        return res.json();
+      })
+      .then(resData => {
+        console.log(resData);
+        this.setState({
+          isAuth: false,
+          authLoading: false,
+        });
+      })
+      .catch(err => {
+        console.log(err);
+        this.setState({
+          isAuth: false,
+          authLoading: false,
+          error: err
+        });
+      });
+
+
   };
 
   loginHandler = (event, authData) => {
