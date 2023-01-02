@@ -61,8 +61,11 @@ class App extends Component {
     this.setState({ authLoading: true });
     fetch('http://localhost:8080/auth/login', {
       method: 'POST',
+      credentials: 'include',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        // The below part should be embedded in response (backend)
+        // 'Access-Control-Allow-Credentials': true 
       },
       body: JSON.stringify({
         email: authData.email,

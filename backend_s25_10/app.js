@@ -1,9 +1,10 @@
 const path = require('path');
-
+const cors = require('cors');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const multer = require('multer');
+const cookieParser = require('cookie-parser');
 
 const feedRoutes = require('./routes/feed');
 const authRoutes = require('./routes/auth');
@@ -31,18 +32,32 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// app.use(bodyParser.urlencoded()); // x-www-form-urlencoded <form>
+// app.use(bodyParser.urle ncoded()); // x-www-form-urlencoded <form>
+// app.use(cookieParser());
 app.use(bodyParser.json()); // application/json
 app.use(
   multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
 );
 app.use('/images', express.static(path.join(__dirname, 'images')));
+/** @type {import("express").RequestHandler} */
+// CORS manual setting without library
+
+// var corsOptions = {
+//   origin: ['http://localhost:3000'],
+//   credentials: true };
+// app.use(cors(corsOptions));
+
+// app.use(cors({ credentials : true, origin: 'http://localhost:3000' }));
 
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', ['http://localhost:3000']);
   res.setHeader(
     'Access-Control-Allow-Methods',
     'OPTIONS, GET, POST, PUT, PATCH, DELETE'
+  );
+  // This is for CORS include mode which allows to share cookie(credential) information
+  res.setHeader(
+    'Access-Control-Allow-Credentials', true
   );
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
