@@ -1,3 +1,5 @@
+// TODO: This should be replaced by tokenValidation later
+
 const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {

@@ -1,10 +1,13 @@
-
 const jwt = require('jsonwebtoken');
+const redisClient = require('../config/redisClient');
+
+
 module.exports = (req, res, next) => {
     return new Promise((resolve, reject) => {
         const cookies = req.headers.cookie;
         let cookieObj = {};
         try {
+
             if (cookies) {
                 const cookieArry = cookies.split(';')
                 // https://stackoverflow.com/questions/11508463/javascript-set-object-key-by-variable
@@ -19,21 +22,34 @@ module.exports = (req, res, next) => {
                     throw error;
                 }
                 // jwt verify error handling and how the error is defined
-                 jwt.verify(cookieObj.access_token, 'somesupersecretsecret',function(err, decoded){
+                // it verifies the validity of token, but doesn't authenticate its credentials from DB
+                
+                // When token is expired, verify() doesn't yield the decoded result, so don't have a way to retrieve userID encoded inside the access token
+                // As of now, redis key-value is configured as user id - refresh token.. 
+                // but I might have to change this into access token - refresh token. 
+                jwt.verify(cookieObj.access_token, 'somesupersecretsecret', function (err, decoded) {
                     console.log(err)
-                    if(err.name === 'TokenExpiredError')
-                 });
+                    if (err) {
+                        // There are three types of errors, but we actually only care
+                        // about this one, because it says that the access token
+                        if (err.name === 'TokenExpiredError') {
+                            // first look up redis whether refresh token is right
+                            const aa = redisClient.get(decoded.userId);
+                            console.log(aa);
+                        } else {
+                            // If any error other than "TokenExpiredError" occurs, it means
+                            // that either token is invalid, or in wrong format, or ...
+                            const error = new Error('Token is invalid!');
+                            error.statusCode = 411;
+                            throw error;
+                        }
 
-                // 이 에러 핸들링은 토큰 익스퍼레이션이라던가 그런 부분을 모두 고려해야 되겠구나
-                // if(!decodedToken){
-                //     const error = new Error('Not authenticated. ');
-                //     error.statusCode = 401;
-                //     throw error;
-                // }
-
-                resolve({
-                    res: res,
-                    req: req
+                    } else {
+                        resolve({
+                            res: res,
+                            req: req
+                        });
+                    }
                 });
 
 
@@ -44,7 +60,8 @@ module.exports = (req, res, next) => {
             }
         }
         catch (error) {
-            reject(error);
+            // For the express's defualt error handler to be able to kick in, use next() instead of reject()
+            next(error);
         }
     });
 }

@@ -2,6 +2,8 @@ const { validationResult } = require('express-validator/check');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const generate_refresh_token = require('../helper/refresh_token')
+const redisClient = require('../config/redisClient');
+
 const jwt_refresh_expiration = 60 * 60 * 24 * 30; // 30 days  on second basis
 
 const User = require('../models/user');
@@ -78,7 +80,8 @@ exports.login = (req, res, next) => {
           userId: loadedUser._id.toString()
         },
         'somesupersecretsecret',
-        { expiresIn: '1h' }
+        // { expiresIn: '1h' }
+        { expiresIn: '1s' }
       );
       /** if you want to use cookie, try below */
       res.setHeader('Set-Cookie', 'test=true');
@@ -89,9 +92,14 @@ exports.login = (req, res, next) => {
       res.cookie("refresh_token", refresh_token, {
         // httpOnly : true
       });
+      
       // console.log(res.set-cookie)
-      // and then set redist with "refresh token" key as refresh_token,
-      // and expires token as refresh_token_maxage 
+      // and then set redis with "refresh token" key as refresh_token,
+      // and expires token as refresh_token_maxage
+      redisClient.set(loadedUser._id.toString(), JSON.stringify({
+        refresh_token : refresh_token,
+        expiresIn : refresh_token_maxage
+      }))
       res.status(200).json({ token: accessToken, userId: loadedUser._id.toString() });
     })
     .catch(err => {
