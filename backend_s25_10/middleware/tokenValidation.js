@@ -27,15 +27,25 @@ module.exports = (req, res, next) => {
                 // When token is expired, verify() doesn't yield the decoded result, so don't have a way to retrieve userID encoded inside the access token
                 // As of now, redis key-value is configured as user id - refresh token.. 
                 // but I might have to change this into access token - refresh token. 
-                jwt.verify(cookieObj.access_token, 'somesupersecretsecret', function (err, decoded) {
+
+                // Oh I found answer for this!!!!
+                // extract payload of expired jwt token
+                // https://stackoverflow.com/questions/51281270/extract-payload-of-expired-jwt-token#fromHistory
+                // ignoreExpiration flag actually doesn't invoke TokenExpiredError
+                jwt.verify(cookieObj.access_token, 'somesupersecretsecret', async function (err, decoded) {
                     console.log(err)
                     if (err) {
                         // There are three types of errors, but we actually only care
                         // about this one, because it says that the access token
                         if (err.name === 'TokenExpiredError') {
+                            decoded = jwt.verify(cookieObj.access_token, 'somesupersecretsecret', {ignoreExpiration: true});
                             // first look up redis whether refresh token is right
-                            const aa = redisClient.get(decoded.userId);
-                            console.log(aa);
+                            const aa = await redisClient.get(decoded.userId);
+                            console.log("asdfasdfa" , await aa);
+                            resolve({
+                                res: res,
+                                req: req
+                            });
                         } else {
                             // If any error other than "TokenExpiredError" occurs, it means
                             // that either token is invalid, or in wrong format, or ...
@@ -45,6 +55,7 @@ module.exports = (req, res, next) => {
                         }
 
                     } else {
+                        req.userId = decoded.userId
                         resolve({
                             res: res,
                             req: req
