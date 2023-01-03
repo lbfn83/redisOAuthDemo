@@ -3,11 +3,12 @@ const { body } = require('express-validator/check');
 
 const feedController = require('../controllers/feed');
 const isAuth = require('../middleware/is-auth');
-
+const tokenAuth = require('../middleware/tokenValidation');
 const router = express.Router();
 
 // GET /feed/posts
-router.get('/posts', isAuth, feedController.getPosts);
+// router.get('/posts', isAuth, feedController.getPosts);
+router.get('/posts', tokenAuth, feedController.getPosts);
 
 // POST /feed/post
 router.post(

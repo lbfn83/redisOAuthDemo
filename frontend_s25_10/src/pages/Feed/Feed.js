@@ -51,6 +51,7 @@ class Feed extends Component {
       this.setState({ postPage: page });
     }
     fetch('http://localhost:8080/feed/posts?page=' + page, {
+      credentials: 'include',
       headers: {
         Authorization: 'Bearer ' + this.props.token
       }
