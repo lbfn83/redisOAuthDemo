@@ -73,10 +73,14 @@ app.use((error, req, res, next) => {
   const data = error.data;
   res.status(status).json({ message: message, data: data });
 });
-
+// The family option specifies the IP address family 4 to use when connecting to the MongoDB server. 
+// This is because a system is prefering IPv6 over IPv4 by default.
 mongoose
   .connect(
-    'mongodb://localhost:27017/messages?retryWrites=true'
+    'mongodb://localhost:27017/messages?retryWrites=true',
+    {
+      family: 4
+    }
   )
   .then(result => {
     app.listen(8080);
