@@ -68,10 +68,10 @@ exports.login = (req, res, next) => {
       let refresh_token = generate_refresh_token(64);
       let refresh_token_maxage = new Date();
       const offset = refresh_token_maxage.getSeconds() + jwt_refresh_expiration; // add defined expiration amounts to current second 
-      refresh_token_maxage.setSeconds(jwt_refresh_expiration);
+      refresh_token_maxage.setSeconds(offset);
       // setSeconds returns original time stamp that is not reflecting the result of setSeconds
       // let refresh_token_maxage = currentDate.setSeconds(offset);
-      console.log(refresh_token_maxage)
+      // console.log(refresh_token_maxage)
 
       /** access token creation */
       const accessToken = jwt.sign(
@@ -86,11 +86,11 @@ exports.login = (req, res, next) => {
       /** if you want to use cookie, try below */
       res.setHeader('Set-Cookie', 'test=true');
       res.cookie("access_token", accessToken, {
-        // httpOnly : true,
+        httpOnly : true,
         // secure : true
       });
       res.cookie("refresh_token", refresh_token, {
-        // httpOnly : true
+        httpOnly : true
       });
       
       // console.log(res.set-cookie)

@@ -2,13 +2,15 @@ const jwt = require('jsonwebtoken');
 const redisClient = require('../config/redisClient');
 const generate_refresh_token = require('../helper/refresh_token');
 
+const jwt_refresh_expiration = 60 * 60 * 24 * 30; // 30 days  on second basis
 
-module.exports = (req, res, next) => {
-    return new Promise((resolve, reject) => {
+// https://www.guidearea.com/authentication-with-jwt-redis-and-nodejs/
+module.exports = async (req, res, next) => {
+    // return new Promise((resolve, reject) => {
         const cookies = req.headers.cookie;
         let cookieObj = {};
         try {
-
+ 
             if (cookies) {
                 const cookieArry = cookies.split(';')
                 // https://stackoverflow.com/questions/11508463/javascript-set-object-key-by-variable
@@ -57,7 +59,8 @@ module.exports = (req, res, next) => {
                         } else {
                             // It can also happen that the refresh token expires; in that case
                             // we need to issue both tokens at the same time
-                            if (refreshTKinfo.expiresIn < currTS) {
+                            // TODO : roll back after testing
+                            if (new Date(refreshTKinfo.expiresIn) > currTS) {
                                 // refresh token expired, we issue refresh token as well
                                 let refresh_token = generate_refresh_token(64);
 
@@ -71,7 +74,9 @@ module.exports = (req, res, next) => {
                                 });
 
                                 // Then we refresh the expiration for refresh token. 1 month from now
-                                let refresh_token_maxage = new Date() + jwt_refresh_expiration;
+                                let refresh_token_maxage = new Date();
+                                const offset = refresh_token_maxage.getSeconds() + jwt_refresh_expiration; // add defined expiration amounts to current second 
+                                refresh_token_maxage.setSeconds(offset);
 
                                 redisClient.set(
                                     decoded.userId,
@@ -94,24 +99,26 @@ module.exports = (req, res, next) => {
                             }, 
                             'somesupersecretsecret', 
                             {  expiresIn: '1m'});
-
+                            req.userId = decoded.userId;
                             // Again, let's assign this token into httpOnly cookie.
                             res.cookie("access_token", accessToken, {
                                 // secure: true,
                                 httpOnly: true
                             });
                         }
-                        resolve({
-                            res: res,
-                            req: req
-                        });
+                        next();
+                        // resolve({
+                        //     res: res,
+                        //     req: req
+                        // });
                     }
                     else {
                         req.userId = decoded.userId
-                        resolve({
-                            res: res,
-                            req: req
-                        });
+                        next();
+                        // resolve({
+                        //     res: res,
+                        //     req: req
+                        // });
                     }
                 });
             } else {
@@ -124,7 +131,7 @@ module.exports = (req, res, next) => {
             // For the express's defualt error handler to be able to kick in, use next() instead of reject()
             next(error);
         }
-    });
+    // });
 }
 
 function aaa() {
